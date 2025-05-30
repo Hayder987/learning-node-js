@@ -50,9 +50,7 @@ const filePath = path.join(__dirname, "./db/todo.json")
 const fs = require("fs");
 const data = fs.readFileSync(filePath, {encoding:"utf-8"})
 
-
 const server = http.createServer((req, res)=>{
-
     // get all todo
 if(req.url === "/todo/all-todo" && req.method==="GET"){
     
@@ -60,10 +58,6 @@ if(req.url === "/todo/all-todo" && req.method==="GET"){
         "content-type":"application/json",
     })
     res.end(data)
-}
-// update todo
-else if(req.url === "/todo/update-todo" && req.method==="PATCH"){
-     res.end("update todo")
 }
 
 // post todo
@@ -78,11 +72,17 @@ else if(req.url === "/todo/create-todo" && req.method==="POST"){
         const alltodos = fs.readFileSync(filePath, {encoding:"utf-8"});
         const parseTodo = JSON.parse(alltodos);
          parseTodo.push({name, age});
-        const strAlltodos = JSON.stringify(parseTodo);
-        fs.writeFileSync(filePath, strAlltodos);
-        res.end(JSON.stringify({name, age}));
+        const strAlltodos = JSON.stringify(parseTodo, null, 2);
+        fs.writeFileSync(filePath, strAlltodos, {encoding:"utf-8"});
+        res.end(JSON.stringify({name, age} ,null, 2));
      })
 }
+
+// update todo
+else if(req.url === "/todo/update-todo" && req.method==="PATCH"){
+     res.end("update todo")
+}
+
 else{
     res.end("no route match")
 }
