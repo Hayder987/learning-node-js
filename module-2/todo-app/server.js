@@ -51,6 +51,9 @@ const fs = require("fs");
 const data = fs.readFileSync(filePath, {encoding:"utf-8"})
 
 const server = http.createServer((req, res)=>{
+   const url = new URL(req.url, `http://${req.headers.host}`);
+  
+
     // get all todo
 if(req.url === "/todo/all-todo" && req.method==="GET"){
     
@@ -60,10 +63,27 @@ if(req.url === "/todo/all-todo" && req.method==="GET"){
     res.end(data)
 }
 
+// get single todo
+else if (req.url.startsWith("/todo") && req.method==="GET"){
+    res.writeHead(201, {
+        "content-type":"application/json",
+    })
+
+    const name = url.searchParams.get("name");
+    const data = fs.readFileSync(filePath, {encoding:"utf-8"});
+    const parseData = JSON.parse(data);
+
+    const singleData = parseData.find(item=> item.name === name);
+    const result = JSON.stringify(singleData, null, 2);
+
+    res.end(result);
+}
+
 // post todo
 else if(req.url === "/todo/create-todo" && req.method==="POST"){
      let data = "";
      req.on("data", (reqData)=>{
+        
        data = data + reqData
      });
 
@@ -79,8 +99,35 @@ else if(req.url === "/todo/create-todo" && req.method==="POST"){
 }
 
 // update todo
-else if(req.url === "/todo/update-todo" && req.method==="PATCH"){
-     res.end("update todo")
+else if(req.url.startsWith("/todo/update-todo") && req.method==="PATCH"){
+    const name = url.searchParams.get("name");
+     let data = "";
+     req.on("data", (reqData)=>{  
+       data = data + reqData
+     });
+
+     req.on("end", ()=>{
+        const {age} = JSON.parse(data)
+        const alltodos = fs.readFileSync(filePath, {encoding:"utf-8"});
+        const parseTodo = JSON.parse(alltodos);
+         const todoIndex = parseTodo.findIndex((item)=> item.name === name)
+         parseTodo[todoIndex].age = age;
+
+        const strAlltodos = JSON.stringify(parseTodo, null, 2);
+        fs.writeFileSync(filePath, strAlltodos, {encoding:"utf-8"});
+        res.end(JSON.stringify({name, age} ,null, 2));
+     })
+}
+else if (req.url.startsWith("/todo/delete-todo") && req.method==="DELETE"){
+    const name = url.searchParams.get("name")
+    const alltodos = fs.readFileSync(filePath, {encoding:"utf-8"});
+    const parseTodos = JSON.parse(alltodos);
+    const remaingTodos = parseTodos.filter(item=> item.name !== name)
+    const strtodos = JSON.stringify(remaingTodos);
+
+    fs.writeFileSync(filePath, strtodos, {encoding:"utf-8"});
+
+    res.end("delete successfully")
 }
 
 else{
